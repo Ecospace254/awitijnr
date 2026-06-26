@@ -96,4 +96,39 @@
       }
     });
   }
+
+  // CV modal / lightbox
+  const cvModal = document.getElementById('cv-modal');
+  const cvFrame = cvModal && cvModal.querySelector('.cv-modal__frame');
+  if (cvModal && cvFrame) {
+    let lastFocused = null;
+    const openCv = (e) => {
+      if (e) e.preventDefault();
+      lastFocused = document.activeElement;
+      if (!cvFrame.src) cvFrame.src = cvFrame.dataset.cvSrc;
+      cvModal.hidden = false;
+      cvModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('cv-modal-open');
+      // next frame so the transition runs
+      requestAnimationFrame(() => cvModal.classList.add('open'));
+      const closeBtn = cvModal.querySelector('.cv-modal__close');
+      if (closeBtn) closeBtn.focus();
+    };
+    const closeCv = () => {
+      cvModal.classList.remove('open');
+      cvModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('cv-modal-open');
+      const done = () => {
+        cvModal.hidden = true;
+        cvModal.removeEventListener('transitionend', done);
+      };
+      cvModal.addEventListener('transitionend', done);
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    };
+    document.querySelectorAll('[data-cv-open]').forEach(el => el.addEventListener('click', openCv));
+    cvModal.querySelectorAll('[data-cv-close]').forEach(el => el.addEventListener('click', closeCv));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !cvModal.hidden) closeCv();
+    });
+  }
 })();

@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/styles.css?v=2" />
 </head>
 <body>
 
@@ -64,8 +64,8 @@
     </p>
     <div class="cta-row">
       <a class="btn btn-primary" href="#contact">Hire Me →</a>
-      <a class="btn btn-ghost" href="assets/documents/fred-awiti-cv.pdf" target="_blank" rel="noopener">
-        View / Download CV
+      <a class="btn btn-ghost" href="assets/documents/fred-awiti-cv.pdf" data-cv-open>
+        View CV
       </a>
     </div>
     <div class="hero-stats">
@@ -220,7 +220,7 @@
     </div>
 
     <p class="work-more">
-      Earlier engagements include GIS systems for KeNHA (World Bank), UETCL Uganda (World Bank), KPLC data collection (50-person team), the Ministry of Devolution ASAL GIS Centre, and National Irrigation Board. <a href="assets/documents/fred-awiti-cv.pdf" target="_blank" rel="noopener">See the full CV →</a>
+      Earlier engagements include GIS systems for KeNHA (World Bank), UETCL Uganda (World Bank), KPLC data collection (50-person team), the Ministry of Devolution ASAL GIS Centre, and National Irrigation Board. <a href="assets/documents/fred-awiti-cv.pdf" data-cv-open>See the full CV →</a>
     </p>
   </div>
 </section>
@@ -426,6 +426,14 @@
   </div>
 </footer>
 
-<script src="assets/main.js" defer></script>
+<div id="cv-modal" class="cv-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="Curriculum Vitae — Fredrick Onyango Awiti">
+  <div class="cv-modal__backdrop" data-cv-close></div>
+  <div class="cv-modal__dialog" role="document">
+    <button type="button" class="cv-modal__close" aria-label="Close CV" data-cv-close>&times;</button>
+    <iframe class="cv-modal__frame" title="Fred Awiti CV" data-cv-src="assets/documents/fred-awiti-cv.pdf"></iframe>
+  </div>
+</div>
+
+<script src="assets/main.js?v=2" defer></script>
 </body>
 </html>
