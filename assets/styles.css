@@ -657,6 +657,7 @@ img { max-width: 100%; display: block; }
   opacity: 0;
   transition: opacity .2s var(--ease);
 }
+.cv-modal[hidden] { display: none; }
 .cv-modal.open { opacity: 1; }
 .cv-modal__backdrop {
   position: absolute;
