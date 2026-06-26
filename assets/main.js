@@ -97,20 +97,79 @@
     });
   }
 
-  // CV modal / lightbox
+  // CV modal / lightbox — render the PDF with PDF.js so it works on
+  // mobile too (iOS Safari & many mobile browsers won't show a PDF in an iframe)
   const cvModal = document.getElementById('cv-modal');
-  const cvFrame = cvModal && cvModal.querySelector('.cv-modal__frame');
-  if (cvModal && cvFrame) {
+  const cvPages = cvModal && cvModal.querySelector('.cv-modal__frame');
+  if (cvModal && cvPages) {
+    const CV_PDF = cvPages.dataset.cvSrc || 'assets/documents/fred-awiti-cv.pdf';
+    const PDFJS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     let lastFocused = null;
+    let pdfState = 'idle'; // idle | loading | done
+
+    const loadScript = (src) => new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+
+    const renderCv = async () => {
+      if (pdfState === 'done' || pdfState === 'loading') return;
+      pdfState = 'loading';
+      cvPages.innerHTML = '<p class="cv-note">Loading CV…</p>';
+      try {
+        if (!window.pdfjsLib) {
+          await loadScript(PDFJS_SRC);
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+        }
+        const pdf = await window.pdfjsLib.getDocument(CV_PDF).promise;
+        cvPages.innerHTML = '';
+        const small = window.matchMedia('(max-width: 700px)').matches;
+        const renderScale = small ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+        // Lazily render each page as it scrolls near view (keeps memory sane on phones)
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const wrap = entry.target;
+            io.unobserve(wrap);
+            pdf.getPage(Number(wrap.dataset.page)).then((page) => {
+              const avail = cvPages.clientWidth - 24;
+              const base = page.getViewport({ scale: 1 });
+              const vp = page.getViewport({ scale: (avail / base.width) * renderScale });
+              const canvas = document.createElement('canvas');
+              canvas.width = vp.width; canvas.height = vp.height;
+              canvas.style.width = '100%'; canvas.style.display = 'block';
+              page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+              wrap.replaceChildren(canvas);
+            });
+          });
+        }, { root: cvPages, rootMargin: '800px 0px' });
+        for (let n = 1; n <= pdf.numPages; n++) {
+          const page = await pdf.getPage(n);
+          const base = page.getViewport({ scale: 1 });
+          const wrap = document.createElement('div');
+          wrap.className = 'cv-page';
+          wrap.dataset.page = String(n);
+          wrap.style.aspectRatio = base.width + ' / ' + base.height;
+          cvPages.appendChild(wrap);
+          io.observe(wrap);
+        }
+        pdfState = 'done';
+      } catch (err) {
+        pdfState = 'idle';
+        cvPages.innerHTML = '<p class="cv-note">Couldn’t display the CV here. <a href="' + CV_PDF + '" target="_blank" rel="noopener">Open the PDF →</a></p>';
+      }
+    };
+
     const openCv = (e) => {
       if (e) e.preventDefault();
       lastFocused = document.activeElement;
-      if (!cvFrame.src) cvFrame.src = cvFrame.dataset.cvSrc;
       cvModal.hidden = false;
       cvModal.setAttribute('aria-hidden', 'false');
       document.body.classList.add('cv-modal-open');
-      // next frame so the transition runs
-      requestAnimationFrame(() => cvModal.classList.add('open'));
+      // next frame so the transition runs and the container has a measurable width
+      requestAnimationFrame(() => { cvModal.classList.add('open'); renderCv(); });
       const closeBtn = cvModal.querySelector('.cv-modal__close');
       if (closeBtn) closeBtn.focus();
     };
